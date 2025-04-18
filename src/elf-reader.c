@@ -53,3 +53,7 @@ void close_elf_file() {
 unsigned char* get_buffer(int offset) {
   return buffer + offset;
 }
+
+Elf64_Ehdr* get_elf_header() {
+  return (Elf64_Ehdr*) get_buffer(0);
+}

@@ -56,6 +56,7 @@ char* get_machine(Elf64_Half machine) {
         case EM_NONE:   return "NONE";
         case EM_386:    return "Intel 80386";
         case EM_X86_64: return "AMD x86-64 architecture";
+        case EM_AARCH64:return "ARM AARCH64";
         default:        return "Other";
     }
 }

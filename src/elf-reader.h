@@ -23,4 +23,5 @@ int read_elf_file(const char* file_path);
 void close_elf_file();
 unsigned char* get_buffer(int offset);
 
+Elf64_Ehdr* get_elf_header();
 #endif

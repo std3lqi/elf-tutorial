@@ -31,4 +31,7 @@ typedef struct table TABLE;
 
 void free_table(TABLE* table);
 
+TABLE* create_elf_file_table();
+TABLE* create_elf_header_table();
+
 #endif

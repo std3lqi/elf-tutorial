@@ -111,8 +111,13 @@ int prepare_windows(TABLE* left_table, TABLE* right_table) {
 
 int main(int argc, char *argv[])
 {
-    TABLE* left_table = NULL;
-    TABLE* right_table = NULL;
+	int rc = read_elf_file(argv[1]);
+	if (rc < 0) {
+		printf("Failed to read file: %d\n", rc);
+		return rc;
+	}
+    TABLE* left_table = create_elf_file_table();
+    TABLE* right_table = create_elf_header_table();
 	prepare_windows(left_table, right_table);
 	destroy_all_windows();
     return 0;

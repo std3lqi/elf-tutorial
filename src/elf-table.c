@@ -36,3 +36,39 @@ void free_table(TABLE* table) {
         free(table);
     }
 }
+
+TABLE* create_elf_file_table() {
+    TABLE* table = create_table(1, NULL);
+    sprintf(table->entries[0].name, "0x%08lX-%08lX *** ELF Header ***", 0, sizeof(Elf64_Ehdr));
+    return table;
+}
+
+TABLE* create_elf_header_table() {
+    TABLE* table = create_table(21, NULL);
+    Elf64_Ehdr* header = get_elf_header();
+    unsigned char* s = header->e_ident;
+    int i = 0;
+    sprintf(table->entries[i++].name, "Magic Number : 0x%02X %c %c %c", s[0], s[1], s[2], s[3]);
+    sprintf(table->entries[i++].name, "File Class   : %s", get_file_class(s[4]));
+    sprintf(table->entries[i++].name, "Data Encoding: %s", get_data_endian(s[5]));
+    sprintf(table->entries[i++].name, "Version      : %d", s[6]);
+    sprintf(table->entries[i++].name, "OS/ABI       : %s", get_os_abi(s[7]));
+    sprintf(table->entries[i++].name, "ABI Version  : %d", s[8]);
+    sprintf(table->entries[i++].name, "File Type    : %s", get_file_type(header->e_type));
+    sprintf(table->entries[i++].name, "Architecture : %s", get_machine(header->e_machine));
+    sprintf(table->entries[i++].name, "File Version : %d", header->e_version);
+    sprintf(table->entries[i++].name, "Entry Point  : 0x%08lX", header->e_entry);
+    sprintf(table->entries[i++].name, "Program Header Table");
+    sprintf(table->entries[i++].name, "  Offset     : 0x%08lX", header->e_phoff);
+    sprintf(table->entries[i++].name, "  Entry Size : %d", header->e_phentsize);
+    sprintf(table->entries[i++].name, "  Entry Count: %d", header->e_phnum);
+    sprintf(table->entries[i++].name, "Section Header Table");
+    sprintf(table->entries[i++].name, "  Offset     : 0x%08lX", header->e_shoff);
+    sprintf(table->entries[i++].name, "  Entry Size : %d", header->e_shentsize);
+    sprintf(table->entries[i++].name, "  Entry Count: %d", header->e_shnum);
+    sprintf(table->entries[i++].name, "Proc Flags   : 0x%08lX", header->e_flags);
+    sprintf(table->entries[i++].name, "ELF Header Sz: %d", header->e_ehsize);
+    sprintf(table->entries[i++].name, "Sect Str Idx : %d", header->e_shstrndx);
+
+    return table;
+}
