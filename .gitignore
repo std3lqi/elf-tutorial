@@ -50,3 +50,9 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Executables
+main
+simple/simple
+simple/v2/simple_v1
+simple/v2/simple_v2

@@ -1,0 +1,11 @@
+VER_1.0 {
+      global:
+            *;
+      local:
+            *;
+};
+
+VER_2.0 {
+      global:
+            get_name_global_func;
+} VER_1.0;
