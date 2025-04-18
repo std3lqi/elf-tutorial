@@ -38,6 +38,20 @@ extern WINDOW_DATA windows_data[MAX_WINDOWS];
 void render_all_windows() {
 	for (int i = 0; i < window_count; i++) {
 		WINDOW_DATA* win_data = &(windows_data[i]);
+		if (strcmp(current_win()->id, LEFT_WIN_ID) == 0 &&
+			strcmp(win_data->id, RIGHT_WIN_ID) == 0) {
+			int cur_line = current_win()->cur_line;
+			if (cur_line == 0) {
+				// ELF Header
+				set_table(win_data, create_elf_header_table());
+			} else if (cur_line == 1) {
+				// Program Header Table
+				set_table(win_data, create_program_headers_table());
+			} else {
+				// Show nothing
+				set_table(win_data, NULL);
+			}
+		}
 		render_window(win_data);
 	}
 }

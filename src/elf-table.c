@@ -38,8 +38,12 @@ void free_table(TABLE* table) {
 }
 
 TABLE* create_elf_file_table() {
-    TABLE* table = create_table(1, NULL);
-    sprintf(table->entries[0].name, "0x%08lX-%08lX *** ELF Header ***", 0, sizeof(Elf64_Ehdr));
+    TABLE* table = create_table(2, NULL);
+    Elf64_Ehdr* header = get_elf_header();
+    int i = 0;
+    sprintf(table->entries[i++].name, "0x%08lX-%08lX *** ELF Header ***", 0, sizeof(Elf64_Ehdr));
+    sprintf(table->entries[i++].name, "0x%08lX-%08lX *** Program Header Table ***",
+        header->e_phoff, header->e_phoff + header->e_phentsize * header->e_phnum);
     return table;
 }
 
@@ -70,5 +74,39 @@ TABLE* create_elf_header_table() {
     sprintf(table->entries[i++].name, "ELF Header Sz: %d", header->e_ehsize);
     sprintf(table->entries[i++].name, "Sect Str Idx : %d", header->e_shstrndx);
 
+    return table;
+}
+
+TABLE* create_program_headers_table() {
+    Elf64_Ehdr* header = get_elf_header();
+    char* title = "TYPE   |FLG| ALIGN  |FILESZ| FILE OFF |MEMSZ |VIRT ADDR |PHYS ADDR";
+    //            "PHDR      R 0x000008 0x01F8 0x00000040 0x01F8 0x00400040 0x00400040"
+    TABLE* table = create_table(header->e_phnum, title);
+    Elf64_Phdr* phdr = (Elf64_Phdr*)get_buffer(header->e_phoff);
+    for (int i = 0; i < header->e_phnum; i++) {
+        // Elf64_Word p_type; /* Segment type */
+        // Elf64_Word p_flags; /* Segment flags */
+        // Elf64_Off p_offset; /* Segment file offset */
+        // Elf64_Addr p_vaddr; /* Segment virtual address */
+        // Elf64_Addr p_paddr; /* Segment physical address */
+        // Elf64_Xword p_filesz; /* Segment size in file */
+        // Elf64_Xword p_memsz; /* Segment size in memory */
+        // Elf64_Xword p_align; /* Segment alignment */        
+        sprintf(
+            table->entries[i].name,
+            "%s %c%c%c 0x%06lX 0x%04X 0x%08lX 0x%04X 0x%08lX 0x%08lX",
+            get_segment_type_name(phdr->p_type),
+            is_segment_executable(phdr->p_flags),
+            is_segment_writable(phdr->p_flags),
+            is_segment_readable(phdr->p_flags),
+            phdr->p_align,
+            phdr->p_filesz,
+            phdr->p_offset,
+            phdr->p_memsz,
+            phdr->p_vaddr,
+            phdr->p_paddr
+        );
+        phdr++;
+    }
     return table;
 }
