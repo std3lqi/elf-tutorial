@@ -36,6 +36,7 @@ extern WINDOW_DATA windows_data[MAX_WINDOWS];
 #define RIGHT_WIN_ID 		"right-win"
 
 void render_all_windows() {
+	Elf64_Ehdr* header = get_elf_header();
 	for (int i = 0; i < window_count; i++) {
 		WINDOW_DATA* win_data = &(windows_data[i]);
 		if (strcmp(current_win()->id, LEFT_WIN_ID) == 0 &&
@@ -47,12 +48,14 @@ void render_all_windows() {
 			} else if (cur_line == 1) {
 				// Program Header Table
 				set_table(win_data, create_program_headers_table());
-			} else if (cur_line == 2) {
-				// Section Header Table
-				set_table(win_data, create_section_headers_table());
 			} else {
-				// Show nothing
-				set_table(win_data, NULL);
+				if (cur_line == 2 + header->e_shnum) {
+					// Section Header Table
+					set_table(win_data, create_section_headers_table());
+				} else {
+					// Show nothing
+					set_table(win_data, NULL);
+				}
 			}
 		}
 		render_window(win_data);

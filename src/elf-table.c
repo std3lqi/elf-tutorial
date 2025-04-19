@@ -38,12 +38,23 @@ void free_table(TABLE* table) {
 }
 
 TABLE* create_elf_file_table() {
-    TABLE* table = create_table(3, NULL);
     Elf64_Ehdr* header = get_elf_header();
+    TABLE* table = create_table(3 + header->e_shnum, NULL);
+    char* string_table = get_section_name_string_table();
     int i = 0;
     sprintf(table->entries[i++].name, "0x%08lX-%08lX *** ELF Header ***", 0, sizeof(Elf64_Ehdr));
     sprintf(table->entries[i++].name, "0x%08lX-%08lX *** Program Header Table ***",
         header->e_phoff, header->e_phoff + header->e_phentsize * header->e_phnum);
+    for (int j = 0; j < header->e_shnum; j++) {
+        Elf64_Shdr* shdr = get_section_header(j);
+        char* name = string_table + shdr->sh_name;
+        Elf64_Xword size = shdr->sh_size;
+        if (shdr->sh_type == SHT_NOBITS) {
+            size = 0;
+        }
+        sprintf(table->entries[i++].name, "0x%08lX-%08lX %s",
+            shdr->sh_offset, shdr->sh_offset + size, name);
+    }
     sprintf(table->entries[i++].name, "0x%08lX-%08lX *** Section Header Table ***",
         header->e_shoff, header->e_shoff + header->e_shentsize * header->e_shnum);
     return table;
@@ -115,10 +126,11 @@ TABLE* create_program_headers_table() {
 
 TABLE* create_section_headers_table() {
     Elf64_Ehdr* header = get_elf_header();
-    char* title = "NAM| TYPE        |FLG| VIRT ADDR| OFFSET   |SIZE |LNK|INF|ALIGN|ENTSZ";
-    //            "123 PROGBITS      E A 0x004005F0 0x000005F0 0x018 000 000 0x004 000"
+    char* title = "NAME            | TYPE        |FLG| VIRT ADDR| OFFSET   |SIZE |LNK|INF|ALIGN|ENTSZ";
+    //            ".init            PROGBITS      E A 0x004005F0 0x000005F0 0x018 000 000 0x004 000"
     TABLE* table = create_table(header->e_shnum, title);
     Elf64_Shdr* shdr = (Elf64_Shdr*)get_buffer(header->e_shoff);
+    char* string_table = get_section_name_string_table();
     for (int i = 0; i < header->e_shnum; i++) {
         // Elf64_Word sh_name; /* Section name (string tbl index) */
         // Elf64_Word sh_type; /* Section type */
@@ -130,10 +142,11 @@ TABLE* create_section_headers_table() {
         // Elf64_Word sh_info; /* Additional section information */
         // Elf64_Xword sh_addralign; /* Section alignment */
         // Elf64_Xword sh_entsize; /* Entry size if section holds table */
+        char* name = string_table + shdr->sh_name;
         sprintf(
             table->entries[i].name,
-            "%03d %s %c%c%c 0x%08lX 0x%08lX 0x%03X %03d %03d 0x%03X %03d",
-            shdr->sh_name,
+            "%-16s %s %c%c%c 0x%08lX 0x%08lX 0x%03X %03d %03d 0x%03X %03d",
+            name,
             get_section_type_name(shdr->sh_type),
             is_section_executable(shdr->sh_flags),
             is_section_writable(shdr->sh_flags),

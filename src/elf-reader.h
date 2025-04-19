@@ -24,4 +24,6 @@ void close_elf_file();
 unsigned char* get_buffer(int offset);
 
 Elf64_Ehdr* get_elf_header();
+Elf64_Shdr* get_section_header(int index);
+char* get_section_name_string_table();
 #endif

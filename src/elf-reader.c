@@ -57,3 +57,15 @@ unsigned char* get_buffer(int offset) {
 Elf64_Ehdr* get_elf_header() {
   return (Elf64_Ehdr*) get_buffer(0);
 }
+
+Elf64_Shdr* get_section_header(int index) {
+  Elf64_Ehdr* header = get_elf_header();
+  Elf64_Shdr* shdr = (Elf64_Shdr*)get_buffer(header->e_shoff);
+  return shdr + index;
+}
+
+char* get_section_name_string_table() {
+  Elf64_Ehdr* header = get_elf_header();
+  Elf64_Shdr* shdr = get_section_header(header->e_shstrndx);
+  return (char*)get_buffer(shdr->sh_offset);
+}
