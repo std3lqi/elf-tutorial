@@ -38,12 +38,14 @@ void free_table(TABLE* table) {
 }
 
 TABLE* create_elf_file_table() {
-    TABLE* table = create_table(2, NULL);
+    TABLE* table = create_table(3, NULL);
     Elf64_Ehdr* header = get_elf_header();
     int i = 0;
     sprintf(table->entries[i++].name, "0x%08lX-%08lX *** ELF Header ***", 0, sizeof(Elf64_Ehdr));
     sprintf(table->entries[i++].name, "0x%08lX-%08lX *** Program Header Table ***",
         header->e_phoff, header->e_phoff + header->e_phentsize * header->e_phnum);
+    sprintf(table->entries[i++].name, "0x%08lX-%08lX *** Section Header Table ***",
+        header->e_shoff, header->e_shoff + header->e_shentsize * header->e_shnum);
     return table;
 }
 
@@ -107,6 +109,44 @@ TABLE* create_program_headers_table() {
             phdr->p_paddr
         );
         phdr++;
+    }
+    return table;
+}
+
+TABLE* create_section_headers_table() {
+    Elf64_Ehdr* header = get_elf_header();
+    char* title = "NAM| TYPE        |FLG| VIRT ADDR| OFFSET   |SIZE |LNK|INF|ALIGN|ENTSZ";
+    //            "123 PROGBITS      E A 0x004005F0 0x000005F0 0x018 000 000 0x004 000"
+    TABLE* table = create_table(header->e_shnum, title);
+    Elf64_Shdr* shdr = (Elf64_Shdr*)get_buffer(header->e_shoff);
+    for (int i = 0; i < header->e_shnum; i++) {
+        // Elf64_Word sh_name; /* Section name (string tbl index) */
+        // Elf64_Word sh_type; /* Section type */
+        // Elf64_Xword sh_flags; /* Section flags */
+        // Elf64_Addr sh_addr; /* Section virtual addr at execution */
+        // Elf64_Off sh_offset; /* Section file offset */
+        // Elf64_Xword sh_size; /* Section size in bytes */
+        // Elf64_Word sh_link; /* Link to another section */
+        // Elf64_Word sh_info; /* Additional section information */
+        // Elf64_Xword sh_addralign; /* Section alignment */
+        // Elf64_Xword sh_entsize; /* Entry size if section holds table */
+        sprintf(
+            table->entries[i].name,
+            "%03d %s %c%c%c 0x%08lX 0x%08lX 0x%03X %03d %03d 0x%03X %03d",
+            shdr->sh_name,
+            get_section_type_name(shdr->sh_type),
+            is_section_executable(shdr->sh_flags),
+            is_section_writable(shdr->sh_flags),
+            is_section_allocatable(shdr->sh_flags),
+            shdr->sh_addr,
+            shdr->sh_offset,
+            shdr->sh_size,
+            shdr->sh_link,
+            shdr->sh_info,
+            shdr->sh_addralign,
+            shdr->sh_entsize
+        );
+        shdr++;
     }
     return table;
 }

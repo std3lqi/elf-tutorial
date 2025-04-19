@@ -47,6 +47,9 @@ void render_all_windows() {
 			} else if (cur_line == 1) {
 				// Program Header Table
 				set_table(win_data, create_program_headers_table());
+			} else if (cur_line == 2) {
+				// Section Header Table
+				set_table(win_data, create_section_headers_table());
 			} else {
 				// Show nothing
 				set_table(win_data, NULL);

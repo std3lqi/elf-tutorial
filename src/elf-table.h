@@ -34,5 +34,6 @@ void free_table(TABLE* table);
 TABLE* create_elf_file_table();
 TABLE* create_elf_header_table();
 TABLE* create_program_headers_table();
+TABLE* create_section_headers_table();
 
 #endif
