@@ -191,3 +191,35 @@ TABLE* create_string_table(Elf64_Shdr* shdr) {
     }
     return table;
 }
+
+TABLE* create_symbol_table(Elf64_Shdr* shdr) {
+    char* title = "Index| TYPE   | BIND |VISIBILITY|SHNDX| VALUE    | SIZE | Name";
+    //            "   26: FILE    LOCAL  DEFAULT    65521 0x00000000 0x0000 crt1.o"
+    int count = shdr->sh_size / shdr->sh_entsize;
+    TABLE* table = create_table(count, title);
+    Elf64_Sym* sym = (Elf64_Sym*) get_buffer(shdr->sh_offset);
+    Elf64_Shdr* shdr_string_table = get_section_header(shdr->sh_link);
+    char* string_table = (char*)get_buffer(shdr_string_table->sh_offset);
+    for (int i = 0; i < count; i++) {
+        // Elf64_Word st_name; /* Symbol name (string tbl index) */
+        // unsigned char st_info; /* Symbol type and binding */
+        // unsigned char st_other; /* Symbol visibility */
+        // Elf64_Section st_shndx /* Section index */
+        // Elf64_Addr st_value; /* Symbol value */
+        // Elf64_Xword st_size; /* Symbol size */        
+        sprintf(
+            table->entries[i].name,
+            "% 4d: %s %s %s % 6d 0x%08lX 0x%04X %s",
+            i,
+            get_symbol_type(sym->st_info),
+            get_symbol_binding(sym->st_info),
+            get_symbol_visibility(sym->st_other),
+            sym->st_shndx,
+            sym->st_value,
+            sym->st_size,
+            string_table + sym->st_name
+        );
+        sym++;
+    }
+    return table;
+}

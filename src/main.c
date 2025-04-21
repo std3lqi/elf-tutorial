@@ -58,6 +58,9 @@ void render_all_windows() {
 						case SHT_STRTAB:
 							set_table(win_data, create_string_table(shdr));
 							break;
+						case SHT_SYMTAB:
+							set_table(win_data, create_symbol_table(shdr));
+							break;
 						default:
 							// Show nothing
 							set_table(win_data, NULL);
