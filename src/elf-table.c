@@ -163,3 +163,31 @@ TABLE* create_section_headers_table() {
     }
     return table;
 }
+
+TABLE* create_string_table(Elf64_Shdr* shdr) {
+    char* title = "Index|String";
+    int count = 0;
+    char* string_table = get_buffer(shdr->sh_offset);
+    for (int i = 0; i < shdr->sh_size; i++) {
+        if (string_table[i] == '\0') {
+            count++;
+        }
+    }
+    int index = 0;  // Table entry index
+    int s_begin = 0;// String start position
+    TABLE* table = create_table(count, title);
+    for (int i = 0; i < shdr->sh_size; i++) {
+        if (string_table[i] == '\0') {
+            count++;
+            sprintf(
+                table->entries[index].name,
+                "% 4d: %s",
+                index,
+                string_table + s_begin
+            );
+            s_begin = i + 1;
+            index++;
+        }
+    }
+    return table;
+}

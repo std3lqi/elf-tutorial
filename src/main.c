@@ -53,8 +53,16 @@ void render_all_windows() {
 					// Section Header Table
 					set_table(win_data, create_section_headers_table());
 				} else {
-					// Show nothing
-					set_table(win_data, NULL);
+					Elf64_Shdr* shdr = get_section_header(cur_line - 2);
+					switch(shdr->sh_type) {
+						case SHT_STRTAB:
+							set_table(win_data, create_string_table(shdr));
+							break;
+						default:
+							// Show nothing
+							set_table(win_data, NULL);
+							break;
+					}
 				}
 			}
 		}

@@ -17,6 +17,8 @@
 #ifndef ELF_HEADER_H
 #define ELF_HEADER_H
 
+#include <elf.h>
+
 struct table_entry {
     char name[1024];
 };
@@ -35,5 +37,6 @@ TABLE* create_elf_file_table();
 TABLE* create_elf_header_table();
 TABLE* create_program_headers_table();
 TABLE* create_section_headers_table();
+TABLE* create_string_table(Elf64_Shdr* shdr);
 
 #endif
