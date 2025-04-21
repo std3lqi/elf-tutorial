@@ -39,5 +39,6 @@ TABLE* create_program_headers_table();
 TABLE* create_section_headers_table();
 TABLE* create_string_table(Elf64_Shdr* shdr);
 TABLE* create_symbol_table(Elf64_Shdr* shdr);
+TABLE* create_dynamic_table(Elf64_Shdr* shdr);
 
 #endif

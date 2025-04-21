@@ -223,3 +223,30 @@ TABLE* create_symbol_table(Elf64_Shdr* shdr) {
     }
     return table;
 }
+
+TABLE* create_dynamic_table(Elf64_Shdr* shdr) {
+    char* title = "Index| TAGVALUE | TAG      | VALUE";
+    //            ""
+    int count = shdr->sh_size / shdr->sh_entsize;
+    TABLE* table = create_table(count, title);
+    Elf64_Dyn* dyn = (Elf64_Dyn*) get_buffer(shdr->sh_offset);
+    Elf64_Shdr* shdr_string_table = get_section_header(shdr->sh_link);
+    char* string_table = (char*)get_buffer(shdr_string_table->sh_offset);
+    for (int i = 0; i < count; i++) {
+        char s[1024];
+        sprintf(s, "0x%08lX", dyn->d_un.d_ptr);
+        if (dyn->d_tag == DT_NEEDED) {
+            sprintf(s, "%s", string_table + dyn->d_un.d_val);
+        }
+        sprintf(
+            table->entries[i].name,
+            "% 4d: 0x%08X %s %s",
+            i,
+            dyn->d_tag,
+            get_dynamic_tag(dyn->d_tag),
+            s
+        );
+        dyn++;
+    }
+    return table;
+}

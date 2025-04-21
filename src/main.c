@@ -59,7 +59,11 @@ void render_all_windows() {
 							set_table(win_data, create_string_table(shdr));
 							break;
 						case SHT_SYMTAB:
+						case SHT_DYNSYM:
 							set_table(win_data, create_symbol_table(shdr));
+							break;
+						case SHT_DYNAMIC:
+							set_table(win_data, create_dynamic_table(shdr));
 							break;
 						default:
 							// Show nothing
