@@ -273,3 +273,38 @@ TABLE* create_hash_table(Elf64_Shdr* shdr) {
     }
     return table;
 }
+
+TABLE* create_gnu_hash_table(Elf64_Shdr* shdr) {
+    Elf64_Word* array = (Elf64_Word*) get_buffer(shdr->sh_offset);
+    Elf64_Xword* array64 = (Elf64_Xword*) get_buffer(shdr->sh_offset);
+    Elf64_Word nbucket = array[0];
+    Elf64_Word sym_offset = array[1];
+    Elf64_Word bloom_size = array[2];
+    Elf64_Word bloom_shift = array[3];
+    int count = 4 + bloom_size + nbucket;
+    int bloom_base = 4;
+    int bloom_base_64 = bloom_base / 2;
+    int bucket_base = bloom_base + bloom_size * 2;
+    int chain_base = bucket_base + nbucket;
+    TABLE* table = create_table(count, NULL);
+    int i = 0;
+    sprintf(table->entries[i++].name, "Buckets      : %d", nbucket);
+    sprintf(table->entries[i++].name, "Symbol Offset: %d", sym_offset);
+    sprintf(table->entries[i++].name, "Bloom Size   : %d", bloom_size);
+    sprintf(table->entries[i++].name, "Bloom Shift  : %d", bloom_shift);
+    for (int j = 0; j < bloom_size; j ++) {
+        Elf64_Xword mask = array64[bloom_base_64 + j];
+        sprintf(table->entries[i++].name, "Bloom[%02d]  : 0x%016lX", j, mask);
+    }
+    for (int j = 0; j < nbucket; j++) {
+        int symbols = 1;
+        int symbol_index = array[bucket_base + j];
+        int chain_index = symbol_index - sym_offset;
+        while ((array[chain_base + chain_index] & 0x01) == 0) {
+            symbols++;
+            chain_index++;
+        }
+        sprintf(table->entries[i++].name, "Bucket[%02d]: %d", j, symbols);
+    }
+    return table;
+}
