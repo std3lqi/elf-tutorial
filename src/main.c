@@ -65,6 +65,9 @@ void render_all_windows() {
 						case SHT_DYNAMIC:
 							set_table(win_data, create_dynamic_table(shdr));
 							break;
+						case SHT_HASH:
+							set_table(win_data, create_hash_table(shdr));
+							break;
 						default:
 							// Show nothing
 							set_table(win_data, NULL);

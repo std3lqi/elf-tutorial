@@ -250,3 +250,26 @@ TABLE* create_dynamic_table(Elf64_Shdr* shdr) {
     }
     return table;
 }
+
+TABLE* create_hash_table(Elf64_Shdr* shdr) {
+    Elf64_Word* array = (Elf64_Word*) get_buffer(shdr->sh_offset);
+    Elf64_Word nbucket = array[0];
+    Elf64_Word nchain = array[1];
+    int count = 2 + nbucket;
+    int bucket_base = 2;
+    int chain_base = bucket_base + nbucket;
+    TABLE* table = create_table(count, NULL);
+    int i = 0;
+    sprintf(table->entries[i++].name, "Buckets   : %d", nbucket);
+    sprintf(table->entries[i++].name, "Chain     : %d", nchain);
+    for (int j = 0; j < nbucket; j++) {
+        int symbols = 0;
+        int symbol_index = array[bucket_base + j];
+        while (symbol_index > 0) {
+            symbols++;
+            symbol_index = array[chain_base + symbol_index];
+        }
+        sprintf(table->entries[i++].name, "Bucket[%02d]: %d", j, symbols);
+    }
+    return table;
+}
