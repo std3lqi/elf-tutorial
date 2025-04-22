@@ -71,6 +71,9 @@ void render_all_windows() {
 						case SHT_GNU_HASH:
 							set_table(win_data, create_gnu_hash_table(shdr));
 							break;
+						case SHT_NOTE:
+							set_table(win_data, create_note_table(shdr));
+							break;
 						default:
 							// Show nothing
 							set_table(win_data, NULL);

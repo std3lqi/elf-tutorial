@@ -308,3 +308,67 @@ TABLE* create_gnu_hash_table(Elf64_Shdr* shdr) {
     }
     return table;
 }
+
+TABLE* create_note_table(Elf64_Shdr* shdr) {
+    int count = 0;
+    Elf64_Word offset = shdr->sh_offset;
+    while (offset < shdr->sh_offset + shdr->sh_size) {
+        Elf64_Nhdr* nhdr = (Elf64_Nhdr*)get_buffer(offset);
+        offset += sizeof(Elf64_Nhdr) + nhdr->n_namesz + nhdr->n_descsz;
+        count++;
+    }
+    offset = shdr->sh_offset;
+    TABLE* table = create_table(count, NULL);
+    for (int i = 0; i < count; i++) {
+        Elf64_Nhdr* nhdr = (Elf64_Nhdr*)get_buffer(offset);
+        offset += sizeof(Elf64_Nhdr);
+        char* name = (char*)get_buffer(offset);
+        offset += nhdr->n_namesz;
+        Elf64_Word* desc = (Elf64_Word*)get_buffer(offset);
+        offset += nhdr->n_descsz;
+
+        char descriptor[1024];
+        descriptor[0] = '\0';
+        switch(nhdr->n_type) {
+            case NT_GNU_ABI_TAG:
+                sprintf(table->entries[i++].name, "%d: %s ABI %s %d.%d.%d",
+                    i, name, get_note_os(desc[0]), desc[1], desc[2], desc[3]
+                );
+                break;
+            case NT_GNU_BUILD_ID:
+                Elf64_Word* desc = (Elf64_Word*)get_buffer(offset);
+                for (int i = 0; i < nhdr->n_descsz; i++) {
+                    sprintf(descriptor + i * 2, "%02X", desc[i]);
+                }
+                sprintf(table->entries[i++].name, "%d: %s BUILD ID %s",
+                    i, name, descriptor
+                );
+                break;
+            case NT_GNU_PROPERTY_TYPE_0:
+                Elf64_Word* w = (Elf64_Word*)desc;
+                if (w[0] == GNU_PROPERTY_X86_FEATURE_1_AND) {
+                    char* shstk = "";
+                    char* ibt = "";
+                    if (w[2] & GNU_PROPERTY_X86_FEATURE_1_IBT) {
+                        ibt = "IBT";
+                    }
+                    if (w[2] * GNU_PROPERTY_X86_FEATURE_1_SHSTK) {
+                        shstk = "SHSTK";
+                    }
+                    sprintf(descriptor, "X86 Features: %s %s", ibt, shstk);
+                    sprintf(table->entries[i++].name, "%d: %s PROPERTY %s",
+                        i, name, descriptor
+                    );                    
+                    break;
+                }
+            case NT_GNU_GOLD_VERSION:
+            case NT_GNU_HWCAP:
+            default:
+                sprintf(table->entries[i++].name, "%d: %s %d %d",
+                    i, name, nhdr->n_type, nhdr->n_descsz
+                );
+        }
+    }
+    return table;
+}
+
