@@ -432,3 +432,53 @@ TABLE* create_gnu_versym_table(Elf64_Shdr* shdr) {
     }
     return table;
 }
+
+TABLE* create_gnu_verneed_table(Elf64_Shdr* shdr) {
+    int count = 0;
+    Elf64_Word offset = shdr->sh_offset;
+    Elf64_Verneed* vn = NULL;
+    do {
+        vn = (Elf64_Verneed*)get_buffer(offset);
+        count += vn->vn_cnt;
+        offset += vn->vn_next;
+    } while (vn->vn_next > 0);
+
+    Elf64_Shdr* shdr_string_table = get_section_header(shdr->sh_link);
+    char* string_table = (char*)get_buffer(shdr_string_table->sh_offset);
+
+    char* title = "IDX |VER|CNT|AUX HASH  |FLAG|OTH|FILE/VER NAME";
+    TABLE* table = create_table(count, title);
+    int i = 0;
+    offset = shdr->sh_offset;
+    do {
+        // Elf64_Half vn_version; /* Version of structure */
+        // Elf64_Half vn_cnt; /* Number of associated aux entries */
+        // Elf64_Word vn_file; /* Offset of filename for this dependency */
+        // Elf64_Word vn_aux; /* Offset in bytes to vernaux array */
+        // Elf64_Word vn_next; /* Offset in bytes to next verneed entry */        
+        vn = (Elf64_Verneed*)get_buffer(offset);
+        Elf64_Off offset_aux = offset + vn->vn_aux;
+        Elf64_Vernaux* vna = NULL;
+        do {
+            vna = (Elf64_Vernaux*)get_buffer(offset_aux);
+            // Elf64_Word vna_hash; /* Hash value of dependency name */
+            // Elf64_Half vna_flags; /* Dependency specific information */
+            // Elf64_Half vna_other; /* Unused */
+            // Elf64_Word vna_name; /* Dependency name string offset */
+            // Elf64_Word vna_next; /* Offset in bytes to next vernaux entry */            
+            sprintf(table->entries[i++].name, "%3d: %3d %3d 0x%08X %s %3d %s %s",
+                i,
+                vn->vn_version,
+                vn->vn_cnt,
+                vna->vna_hash,
+                get_version_def_flags(vna->vna_flags),
+                vna->vna_other,
+                string_table + vn->vn_file,
+                string_table + vna->vna_name
+            );
+            offset_aux += vna->vna_next;
+        } while (vna->vna_next > 0);
+        offset += vn->vn_next;
+    } while (vn->vn_next > 0);
+    return table;
+}
