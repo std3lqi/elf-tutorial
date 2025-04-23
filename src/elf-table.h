@@ -47,5 +47,6 @@ TABLE* create_gnu_verdef_table(Elf64_Shdr* shdr);
 TABLE* create_gnu_versym_table(Elf64_Shdr* shdr);
 TABLE* create_gnu_verneed_table(Elf64_Shdr* shdr);
 TABLE* create_rela_table(Elf64_Shdr* shdr);
+TABLE* create_hex_table(Elf64_Shdr* shdr);
 
 #endif

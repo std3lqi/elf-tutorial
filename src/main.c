@@ -86,6 +86,16 @@ void render_all_windows() {
 						case SHT_RELA:
 							set_table(win_data, create_rela_table(shdr));
 							break;
+						case SHT_PROGBITS:
+							char* string_table = get_section_name_string_table();
+							char* section_name = string_table + shdr->sh_name;
+							if (strcmp(section_name, ".interp") == 0 ||
+								strcmp(section_name, ".comment") == 0) {
+								set_table(win_data, create_string_table(shdr));
+							} else {
+								set_table(win_data, create_hex_table(shdr));
+							}
+							break;
 						default:
 							// Show nothing
 							set_table(win_data, NULL);

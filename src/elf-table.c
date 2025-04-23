@@ -504,3 +504,31 @@ TABLE* create_rela_table(Elf64_Shdr* shdr) {
     }
     return table; 
 }
+
+TABLE* create_hex_table(Elf64_Shdr* shdr) {
+    unsigned char* buf = get_buffer(shdr->sh_offset);
+    int size = shdr->sh_size;
+    int count = (size + 16 - 1) / 16;
+    char* table_header = "Offset | 00 01 02 03 04 05 06 07 | 08 09 0A 0B 0C 0D 0E 0F";
+    TABLE* table = create_table(count, table_header);
+
+    for (int i = 0; i < table->count; i++) {
+        char * row = table->entries[i].name;
+        sprintf(row, "0x%04X  ", i * 16);
+        row += 8;
+        int cols = 16;
+        if (i * 16 + 16 > size) {
+            cols = size - i * 16;
+        }
+        for (int j = 0; j < cols; j ++) {
+            if (j == 8) {
+                sprintf(row, " |");    
+                row += 2;
+            }
+            sprintf(row, " %02X", buf[j]);
+            row += 3;
+        }
+        buf += 16;
+    }
+    return table;
+}
