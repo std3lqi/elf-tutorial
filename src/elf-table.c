@@ -422,3 +422,13 @@ TABLE* create_gnu_verdef_table(Elf64_Shdr* shdr) {
 
     return table;
 }
+
+TABLE* create_gnu_versym_table(Elf64_Shdr* shdr) {
+    int count = shdr->sh_size / shdr->sh_entsize;
+    TABLE* table = create_table(count, NULL);
+    Elf64_Versym* sym = (Elf64_Versym*)get_buffer(shdr->sh_offset);
+    for (int i = 0; i < count; i++) {
+        sprintf(table->entries[i].name, "%d: %d", i, sym[i]);
+    }
+    return table;
+}
