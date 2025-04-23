@@ -43,5 +43,6 @@ TABLE* create_dynamic_table(Elf64_Shdr* shdr);
 TABLE* create_hash_table(Elf64_Shdr* shdr);
 TABLE* create_gnu_hash_table(Elf64_Shdr* shdr);
 TABLE* create_note_table(Elf64_Shdr* shdr);
+TABLE* create_gnu_verdef_table(Elf64_Shdr* shdr);
 
 #endif

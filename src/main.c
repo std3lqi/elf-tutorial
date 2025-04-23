@@ -74,6 +74,9 @@ void render_all_windows() {
 						case SHT_NOTE:
 							set_table(win_data, create_note_table(shdr));
 							break;
+						case SHT_GNU_verdef:
+							set_table(win_data, create_gnu_verdef_table(shdr));
+							break;
 						default:
 							// Show nothing
 							set_table(win_data, NULL);

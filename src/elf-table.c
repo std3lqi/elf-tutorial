@@ -372,3 +372,53 @@ TABLE* create_note_table(Elf64_Shdr* shdr) {
     return table;
 }
 
+TABLE* create_gnu_verdef_table(Elf64_Shdr* shdr) {
+    int count = 0;
+    Elf64_Word offset = shdr->sh_offset;
+    Elf64_Verdef* vd = NULL;
+    do {
+        vd = (Elf64_Verdef*)get_buffer(offset);
+        count++;
+        offset += vd->vd_next;
+    } while (vd->vd_next > 0);
+
+    char* title = "IDX |VER|FLAG|NDX|CNT|HASH    |AUX";
+    TABLE* table = create_table(count, title);
+
+    Elf64_Shdr* shdr_string_table = get_section_header(shdr->sh_link);
+    char* string_table = (char*)get_buffer(shdr_string_table->sh_offset);
+
+    int i = 0;
+    offset = shdr->sh_offset;
+    do {
+        vd = (Elf64_Verdef*)get_buffer(offset);
+        // Elf64_Half vd_version; /* Version revision */
+        // Elf64_Half vd_flags; /* Version information */
+        // Elf64_Half vd_ndx; /* Version Index */
+        // Elf64_Half vd_cnt; /* Number of associated aux entries */
+        // Elf64_Word vd_hash; /* Version name hash value */
+        // Elf64_Word vd_aux; /* Offset in bytes to verdaux array */
+        // Elf64_Word vd_next; /* Offset in bytes to next verdef entry */
+        char aux[1024]; aux[0] = '\0';
+        Elf64_Off offset_aux = offset + vd->vd_aux;
+        Elf64_Verdaux* vda = NULL;
+        do {
+            vda = (Elf64_Verdaux*)get_buffer(offset_aux);
+            char* aux_name = string_table + vda->vda_name;
+            sprintf(aux, "%s %s", aux, aux_name);
+            offset_aux += vda->vda_next;
+        } while (vda->vda_next > 0);
+        sprintf(table->entries[i++].name, "%3d: %3d %s %3d %3d 0x%08X %s",
+            i,
+            vd->vd_version,
+            get_version_def_flags(vd->vd_flags),
+            vd->vd_ndx,
+            vd->vd_cnt,
+            vd->vd_hash,
+            aux
+        );
+        offset += vd->vd_next;
+    } while (vd->vd_next > 0);
+
+    return table;
+}
