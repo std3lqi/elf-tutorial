@@ -482,3 +482,25 @@ TABLE* create_gnu_verneed_table(Elf64_Shdr* shdr) {
     } while (vn->vn_next > 0);
     return table;
 }
+
+TABLE* create_rela_table(Elf64_Shdr* shdr) {
+    int count = shdr->sh_size / shdr->sh_entsize;
+    char* title = "IDX |OFFSET    |TYPE|SYM|ADDEND    |RELOCATION TYPE";
+    TABLE* table = create_table(count, title);
+    Elf64_Rela* rela = (Elf64_Rela*)get_buffer(shdr->sh_offset);
+    for (int i = 0; i < count; i++) {
+        // Elf64_Addr r_offset; /* Address */
+        // Elf64_Xword r_info; /* Relocation type and symbol index */
+        // Elf64_Sxword r_addend; /* Addend */        
+        sprintf(table->entries[i].name, "%3d: 0x%08lX %4d %3d 0x%08lX %s",
+            i,
+            rela->r_offset,
+            ELF64_R_TYPE(rela->r_info),
+            ELF64_R_SYM(rela->r_info),
+            rela->r_addend,
+            get_relocation_type(rela->r_info)
+        );
+        rela++;
+    }
+    return table; 
+}

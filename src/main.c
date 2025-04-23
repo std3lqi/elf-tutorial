@@ -83,6 +83,9 @@ void render_all_windows() {
 						case SHT_GNU_verneed:
 							set_table(win_data, create_gnu_verneed_table(shdr));
 							break;
+						case SHT_RELA:
+							set_table(win_data, create_rela_table(shdr));
+							break;
 						default:
 							// Show nothing
 							set_table(win_data, NULL);
