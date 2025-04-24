@@ -127,8 +127,8 @@ TABLE* create_program_headers_table() {
 
 TABLE* create_section_headers_table() {
     Elf64_Ehdr* header = get_elf_header();
-    char* title = "NAME            | TYPE        |FLG| VIRT ADDR| OFFSET   |SIZE |LNK|INF|ALIGN|ENTSZ";
-    //            ".init            PROGBITS      E A 0x004005F0 0x000005F0 0x018 000 000 0x004 000"
+    char* title = "Index|NAME            | TYPE        |FLG| VIRT ADDR| OFFSET   |SIZE |LNK|INF|ALIGN|ENTSZ";
+    //            "   1: .init            PROGBITS      E A 0x004005F0 0x000005F0 0x018 000 000 0x004 000"
     TABLE* table = create_table(header->e_shnum, title);
     Elf64_Shdr* shdr = (Elf64_Shdr*)get_buffer(header->e_shoff);
     char* string_table = get_section_name_string_table();
@@ -146,7 +146,8 @@ TABLE* create_section_headers_table() {
         char* name = string_table + shdr->sh_name;
         sprintf(
             table->entries[i].name,
-            "%-16s %s %c%c%c 0x%08lX 0x%08lX 0x%03X %03d %03d 0x%03X %03d",
+            "%4d: %-16s %s %c%c%c 0x%08lX 0x%08lX 0x%03X %03d %03d 0x%03X %03d",
+            i,
             name,
             get_section_type_name(shdr->sh_type),
             is_section_executable(shdr->sh_flags),
