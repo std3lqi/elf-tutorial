@@ -97,8 +97,8 @@ void render_all_windows() {
 							}
 							break;
 						default:
-							// Show nothing
-							set_table(win_data, NULL);
+							// Show Hex
+							set_table(win_data, create_hex_table(shdr));
 							break;
 					}
 				}

@@ -52,8 +52,9 @@ TABLE* create_elf_file_table() {
         if (shdr->sh_type == SHT_NOBITS) {
             size = 0;
         }
-        sprintf(table->entries[i++].name, "0x%08lX-%08lX %s",
-            shdr->sh_offset, shdr->sh_offset + size, name);
+        sprintf(table->entries[i++].name, "0x%08lX-%08lX %s %s",
+            shdr->sh_offset, shdr->sh_offset + size,
+            get_section_type_name(shdr->sh_type), name);
     }
     sprintf(table->entries[i++].name, "0x%08lX-%08lX *** Section Header Table ***",
         header->e_shoff, header->e_shoff + header->e_shentsize * header->e_shnum);
@@ -181,7 +182,7 @@ TABLE* create_string_table(Elf64_Shdr* shdr) {
             count++;
             sprintf(
                 table->entries[index].name,
-                "% 4d: %s",
+                "%4d: %s",
                 index,
                 string_table + s_begin
             );
@@ -193,7 +194,7 @@ TABLE* create_string_table(Elf64_Shdr* shdr) {
 }
 
 TABLE* create_symbol_table(Elf64_Shdr* shdr) {
-    char* title = "Index| TYPE   | BIND |VISIBILITY|SHNDX| VALUE    | SIZE | Name";
+    char* title = "Index| TYPE  | BIND |VISIBILITY|SHNDX| VALUE    | SIZE | Name";
     //            "   26: FILE    LOCAL  DEFAULT    65521 0x00000000 0x0000 crt1.o"
     int count = shdr->sh_size / shdr->sh_entsize;
     TABLE* table = create_table(count, title);
@@ -209,7 +210,7 @@ TABLE* create_symbol_table(Elf64_Shdr* shdr) {
         // Elf64_Xword st_size; /* Symbol size */        
         sprintf(
             table->entries[i].name,
-            "% 4d: %s %s %s % 6d 0x%08lX 0x%04X %s",
+            "%4d: %s %s %s % 6d 0x%08lX 0x%04X %s",
             i,
             get_symbol_type(sym->st_info),
             get_symbol_binding(sym->st_info),
@@ -294,7 +295,7 @@ TABLE* create_gnu_hash_table(Elf64_Shdr* shdr) {
     sprintf(table->entries[i++].name, "Bloom Shift  : %d", bloom_shift);
     for (int j = 0; j < bloom_size; j ++) {
         Elf64_Xword mask = array64[bloom_base_64 + j];
-        sprintf(table->entries[i++].name, "Bloom[%02d]  : 0x%016lX", j, mask);
+        sprintf(table->entries[i++].name, "Bloom[%02d]    : 0x%016lX", j, mask);
     }
     for (int j = 0; j < nbucket; j++) {
         int symbols = 1;
@@ -304,7 +305,7 @@ TABLE* create_gnu_hash_table(Elf64_Shdr* shdr) {
             symbols++;
             chain_index++;
         }
-        sprintf(table->entries[i++].name, "Bucket[%02d]: %d", j, symbols);
+        sprintf(table->entries[i++].name, "Bucket[%02d]   : %d", j, symbols);
     }
     return table;
 }
@@ -382,7 +383,7 @@ TABLE* create_gnu_verdef_table(Elf64_Shdr* shdr) {
         offset += vd->vd_next;
     } while (vd->vd_next > 0);
 
-    char* title = "IDX |VER|FLAG|NDX|CNT|HASH    |AUX";
+    char* title = "Index|VER|FLAG|NDX|CNT|HASH      |AUX";
     TABLE* table = create_table(count, title);
 
     Elf64_Shdr* shdr_string_table = get_section_header(shdr->sh_link);
@@ -408,7 +409,7 @@ TABLE* create_gnu_verdef_table(Elf64_Shdr* shdr) {
             sprintf(aux, "%s %s", aux, aux_name);
             offset_aux += vda->vda_next;
         } while (vda->vda_next > 0);
-        sprintf(table->entries[i++].name, "%3d: %3d %s %3d %3d 0x%08X %s",
+        sprintf(table->entries[i].name, "%4d: %3d %s %3d %3d 0x%08X %s",
             i,
             vd->vd_version,
             get_version_def_flags(vd->vd_flags),
@@ -417,6 +418,7 @@ TABLE* create_gnu_verdef_table(Elf64_Shdr* shdr) {
             vd->vd_hash,
             aux
         );
+        i++;
         offset += vd->vd_next;
     } while (vd->vd_next > 0);
 
@@ -425,10 +427,11 @@ TABLE* create_gnu_verdef_table(Elf64_Shdr* shdr) {
 
 TABLE* create_gnu_versym_table(Elf64_Shdr* shdr) {
     int count = shdr->sh_size / shdr->sh_entsize;
-    TABLE* table = create_table(count, NULL);
+    char* title = "Index|Version Index Number";
+    TABLE* table = create_table(count, title);
     Elf64_Versym* sym = (Elf64_Versym*)get_buffer(shdr->sh_offset);
     for (int i = 0; i < count; i++) {
-        sprintf(table->entries[i].name, "%d: %d", i, sym[i]);
+        sprintf(table->entries[i].name, "%4d: %d", i, sym[i]);
     }
     return table;
 }
@@ -446,7 +449,7 @@ TABLE* create_gnu_verneed_table(Elf64_Shdr* shdr) {
     Elf64_Shdr* shdr_string_table = get_section_header(shdr->sh_link);
     char* string_table = (char*)get_buffer(shdr_string_table->sh_offset);
 
-    char* title = "IDX |VER|CNT|AUX HASH  |FLAG|OTH|FILE/VER NAME";
+    char* title = "Index|VER|CNT|AUX HASH  |FLAG|OTH|FILE/VER NAME";
     TABLE* table = create_table(count, title);
     int i = 0;
     offset = shdr->sh_offset;
@@ -466,7 +469,7 @@ TABLE* create_gnu_verneed_table(Elf64_Shdr* shdr) {
             // Elf64_Half vna_other; /* Unused */
             // Elf64_Word vna_name; /* Dependency name string offset */
             // Elf64_Word vna_next; /* Offset in bytes to next vernaux entry */            
-            sprintf(table->entries[i++].name, "%3d: %3d %3d 0x%08X %s %3d %s %s",
+            sprintf(table->entries[i].name, "%4d: %3d %3d 0x%08X %s %3d %s %s",
                 i,
                 vn->vn_version,
                 vn->vn_cnt,
@@ -476,6 +479,7 @@ TABLE* create_gnu_verneed_table(Elf64_Shdr* shdr) {
                 string_table + vn->vn_file,
                 string_table + vna->vna_name
             );
+            i++;
             offset_aux += vna->vna_next;
         } while (vna->vna_next > 0);
         offset += vn->vn_next;
@@ -485,14 +489,14 @@ TABLE* create_gnu_verneed_table(Elf64_Shdr* shdr) {
 
 TABLE* create_rela_table(Elf64_Shdr* shdr) {
     int count = shdr->sh_size / shdr->sh_entsize;
-    char* title = "IDX |OFFSET    |TYPE|SYM|ADDEND    |RELOCATION TYPE";
+    char* title = "Index|OFFSET    |TYPE|SYM|ADDEND    |RELOCATION TYPE";
     TABLE* table = create_table(count, title);
     Elf64_Rela* rela = (Elf64_Rela*)get_buffer(shdr->sh_offset);
     for (int i = 0; i < count; i++) {
         // Elf64_Addr r_offset; /* Address */
         // Elf64_Xword r_info; /* Relocation type and symbol index */
         // Elf64_Sxword r_addend; /* Addend */        
-        sprintf(table->entries[i].name, "%3d: 0x%08lX %4d %3d 0x%08lX %s",
+        sprintf(table->entries[i].name, "%4d: 0x%08lX %4d %3d 0x%08lX %s",
             i,
             rela->r_offset,
             ELF64_R_TYPE(rela->r_info),
