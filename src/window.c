@@ -118,8 +118,8 @@ int get_table_rows(WINDOW_DATA* win_data) {
 }
 
 void render_window(WINDOW_DATA* win_data) {
-    int starty = win_data->win->_begy;
-    int startx = win_data->win->_begx; 
+    int starty = getbegy(win_data->win);
+    int startx = getbegx(win_data->win);
     int height = win_data->height;
     int width  = win_data->width;
     TABLE* table = win_data->table;
