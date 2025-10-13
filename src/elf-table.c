@@ -336,9 +336,9 @@ TABLE* create_note_table(Elf64_Shdr* shdr) {
                 );
                 break;
             case NT_GNU_BUILD_ID:
-                Elf64_Word* desc = (Elf64_Word*)get_buffer(offset);
+                unsigned char* build_id = (unsigned char*) desc;
                 for (int i = 0; i < nhdr->n_descsz; i++) {
-                    sprintf(descriptor + i * 2, "%02X", desc[i]);
+                    sprintf(descriptor + i * 2, "%02X", build_id[i]);
                 }
                 sprintf(table->entries[i++].name, "%d: %s BUILD ID %s",
                     i, name, descriptor
